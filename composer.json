@@ -1,5 +1,5 @@
 {
-  "name": "ahidtechnologies/zkteco-biometric",
+  "name": "tkien/zkteco-biometric",
   "description": "Laravel package for ZKTeco biometric device integration with attendance management",
   "keywords": [
     "laravel",
