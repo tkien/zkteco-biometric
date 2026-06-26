@@ -126,7 +126,7 @@ class BiometricCommand extends Model
     public static function queryBioDataCommand(string $commandId, string $pin, int $bioType): string
     {
         $commandId = "BIODATA-{$commandId}";
-        return "C:$commandId:DATA GET BIODATA PIN=$pin\tBIO_TYPE=$bioType\n";
+        return "C:$commandId:DATA QUERY BIODATA PIN=$pin\tTYPE=$bioType\n";
     }
 
     /**
