@@ -12,6 +12,7 @@ class UserStatusChanged
     use Dispatchable, SerializesModels;
 
     public string $employeeId;
+    public int $userId;
     public string $employeeName;
     public bool $isActive;
     protected ZKTecoBiometric $biometric;
@@ -19,9 +20,10 @@ class UserStatusChanged
     /**
      * Khởi tạo sự kiện và TỰ ĐỘNG xử lý tạo lệnh ADMS trong thư viện.
      */
-    public function __construct(string $employeeId, string $employeeName, bool $isActive)
+    public function __construct(string $employeeId, int $userId, string $employeeName, bool $isActive)
     {
         $this->employeeId = $employeeId;
+        $this->userId = $userId;
         $this->employeeName = $employeeName;
         $this->isActive = $isActive;
         $this->biometric = new ZKTecoBiometric();
@@ -46,10 +48,10 @@ class UserStatusChanged
         foreach ($devices as $device) {
             if ($this->isActive) {
                 // Nếu active: Tạo lệnh thêm user
-                $this->biometric->createUserCommand($device->serial_number, $this->employeeId, $this->employeeName);
+                $this->biometric->createUserCommand($device->serial_number, $this->employeeId, $this->employeeName, $this->userId);
             } else {
                 // Nếu không active: Tạo lệnh xóa user khỏi máy
-                $this->biometric->deleteUserCommand($device->serial_number, $this->employeeId);
+                $this->biometric->deleteUserCommand($device->serial_number, $this->employeeId, $this->userId);
             }
         }
     }
