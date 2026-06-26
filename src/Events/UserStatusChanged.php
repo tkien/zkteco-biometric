@@ -19,12 +19,12 @@ class UserStatusChanged
     /**
      * Khởi tạo sự kiện và TỰ ĐỘNG xử lý tạo lệnh ADMS trong thư viện.
      */
-    public function __construct(string $employeeId, string $employeeName, bool $isActive, ZKTecoBiometric $biometric)
+    public function __construct(string $employeeId, string $employeeName, bool $isActive)
     {
         $this->employeeId = $employeeId;
         $this->employeeName = $employeeName;
         $this->isActive = $isActive;
-        $this->biometric = $biometric;
+        $this->biometric = new ZKTecoBiometric();
 
         // TỰ ĐỘNG XỬ LÝ LOGIC TẠO COMMAND NGAY TRONG LIB
         $this->generateDeviceCommands();
