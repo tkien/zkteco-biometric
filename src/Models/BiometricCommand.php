@@ -98,7 +98,7 @@ class BiometricCommand extends Model
      */
     public static function createUserCommand(string $commandId, string $pin, string $name): string
     {
-        $commandId = "CREATEUSER-{$commandId}";
+        // $commandId = "CREATEUSER-{$commandId}";
         return "C:$commandId:DATA USER PIN=$pin\tName=$name\n";
     }
 
@@ -107,7 +107,7 @@ class BiometricCommand extends Model
      */
     public static function queryUserCommand(string $commandId, string $pin): string
     {
-        $commandId = "QUERYUSER-{$commandId}";
+        // $commandId = "QUERYUSER-{$commandId}";
         return "C:{$commandId}:DATA QUERY USERINFO PIN={$pin}\n";
     }
 
@@ -116,7 +116,7 @@ class BiometricCommand extends Model
      */
     public static function deleteUserCommand(string $commandId, string $pin): string
     {
-        $commandId = "DELETEUSER-{$commandId}";
+        // $commandId = "DELETEUSER-{$commandId}";
         return "C:$commandId:DATA DELETE USERINFO PIN=$pin\n";
     }
 
@@ -125,7 +125,7 @@ class BiometricCommand extends Model
      */
     public static function queryBioDataCommand(string $commandId, string $pin, int $bioType): string
     {
-        $commandId = "BIODATA-{$commandId}";
+        // $commandId = "BIODATA-{$commandId}";
         return "C:$commandId:DATA QUERY BIODATA PIN=$pin\tTYPE=$bioType\n";
     }
 
