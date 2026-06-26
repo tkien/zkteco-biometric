@@ -132,7 +132,7 @@ class BiometricEmployee extends Model
             );
 
             // BẮN EVENT RA NGOÀI HỆ THỐNG LARAVEL
-            BiometricDataReceived::dispatch($employeeId, 1, $template);
+            BiometricDataReceived::dispatch($device, $employeeId, 1, $template);
         }
     }
 
@@ -157,7 +157,7 @@ class BiometricEmployee extends Model
             );
 
             // BẮN EVENT RA NGOÀI HỆ THỐNG LARAVEL
-            BiometricDataReceived::dispatch($employeeId, 2, $cardNumber);
+            BiometricDataReceived::dispatch($device, $employeeId, 2, $cardNumber);
         }
     }
 
@@ -185,7 +185,7 @@ class BiometricEmployee extends Model
             );
 
             // BẮN EVENT RA NGOÀI HỆ THỐNG LARAVEL
-            BiometricDataReceived::dispatch($employeeId, 3, $photo);
+            BiometricDataReceived::dispatch($device, $employeeId, 3, $photo);
         }
     }
 
@@ -221,7 +221,7 @@ class BiometricEmployee extends Model
             );
 
             // BẮN EVENT RA NGOÀI HỆ THỐNG LARAVEL
-            BiometricDataReceived::dispatch($employeeId, 9, $faceTemplate, $majorVer);
+            BiometricDataReceived::dispatch($device, $employeeId, 9, $faceTemplate, $majorVer);
         }
     }
 
