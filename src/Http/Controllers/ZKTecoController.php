@@ -9,16 +9,19 @@ use AhidTechnologies\ZKTecoBiometric\Models\BiometricDevice;
 use AhidTechnologies\ZKTecoBiometric\Models\BiometricCommand;
 use AhidTechnologies\ZKTecoBiometric\Models\BiometricEmployee;
 use AhidTechnologies\ZKTecoBiometric\Services\AttendanceProcessor;
+use AhidTechnologies\ZKTecoBiometric\ZKTecoBiometric;
 
 class ZKTecoController
 {
     use HasLogging;
 
     protected AttendanceProcessor $attendanceProcessor;
+    protected ZKTecoBiometric $zktecoBiometric;
 
-    public function __construct(AttendanceProcessor $attendanceProcessor)
+    public function __construct(AttendanceProcessor $attendanceProcessor, ZKTecoBiometric $zktecoBiometric)
     {
         $this->attendanceProcessor = $attendanceProcessor;
+        $this->zktecoBiometric = $zktecoBiometric;
     }
 
     /**
@@ -67,6 +70,11 @@ class ZKTecoController
             'rows_count' => count($rows),
             'rows' => $rows,
         ]);
+
+        // Handle OPLOG events for face registration
+        if (str_contains($rawContent, 'OPLOG')) {
+            return $this->handleOplog($rawContent, $device);
+        }
 
         // Check if the content contains biometric data (fingerprint, user, card, or photo, bioData)
         $hasBiometricData = (
@@ -286,6 +294,51 @@ class ZKTecoController
     protected function deviceResponse(string $content, int $status = 200): Response
     {
         return response($content, $status)->header('Content-Type', 'text/plain');
+    }
+
+    /**
+     * Handle OPLOG events for face registration
+     */
+    protected function handleOplog(string $rawContent, BiometricDevice $device): Response
+    {
+        // 1. Phân tách chuỗi thô của ZKTeco bằng dấu Tab (\t) hoặc dấu xuống dòng (\n)
+        $formattedContent = str_replace(["\n", "\t"], "&", $rawContent);
+        parse_str($formattedContent, $opData);
+
+        // Dựa trên log: OPLOG 114 0 2026-06-25 18:59:52 0001 0 0 0
+        // parse_str sẽ bóc tách các trường. Cần tìm mã thao tác và ID nhân viên.
+        // Lưu ý: Tùy cách parse chuỗi thô, bạn có thể lấy mảng trực tiếp bằng cách nổ chuỗi (explode)
+        $parts = explode("\t", trim($rawContent));
+
+        // Đảm bảo mảng có đủ phần tử và phần tử đầu tiên chứa 'OPLOG 114' hoặc từ khóa OPLOG
+        if (count($parts) >= 5) {
+            // Tách chữ "OPLOG 114" hoặc "OPLOG 101" thành mảng
+            $opHeader = explode(" ", $parts[0]);
+            $opType = $opHeader[1] ?? null; // Lấy mã số: 114 hoặc 101
+            $employeeId = $parts[3] ?? null; // Lấy mã nhân viên: "0001"
+
+            // Mã 114: Đăng ký khuôn mặt thành công trên dòng máy Visible Light
+            if ($opType === '114' && $employeeId) {
+                // Kiểm tra nhân viên
+                $biometricEmployee = BiometricEmployee::where('biometric_employee_id', $employeeId)->first();
+
+                // Không có thì bỏ qua
+                if(!$biometricEmployee) {
+                    return $this->deviceResponse("OK");
+                }
+
+                // 2. Tạo lệnh ép chính chiếc máy này phải gửi dữ liệu khuôn mặt lên
+                // Cú pháp chuẩn ZKTeco: DATA QUERY BIODATA PIN=[Mã_NV] TYPE=9
+                $this->zktecoBiometric->queryBioDataCommand(
+                    deviceSerial: $device->serial_number,
+                    pin: $employeeId,
+                    bioType: 9, // 9 = Face, 1 = Fingerprint, 2 = Card
+                    userId: $biometricEmployee->user_id
+                );
+            }
+        }
+
+        return $this->deviceResponse("OK");
     }
 
     /**
