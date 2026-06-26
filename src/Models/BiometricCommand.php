@@ -121,6 +121,15 @@ class BiometricCommand extends Model
     }
 
     /**
+     * Create a query BIODATA command for the device.
+     */
+    public static function queryBioDataCommand(string $commandId, string $pin, int $bioType): string
+    {
+        $commandId = "BIODATA-{$commandId}";
+        return "C:$commandId:DATA GET BIODATA PIN=$pin\tBIO_TYPE=$bioType\n";
+    }
+
+    /**
      * Mark command as executed.
      */
     public static function commandExecuted(?self $pendingCommand, BiometricDevice $device): void

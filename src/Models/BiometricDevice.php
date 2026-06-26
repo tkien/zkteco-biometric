@@ -94,7 +94,7 @@ class BiometricDevice extends Model
     /**
      * Mark device as online.
      */
-    public function markOnline(string $ip = null): void
+    public function markOnline(string $ip): void
     {
         $this->update([
             'status' => 'online',

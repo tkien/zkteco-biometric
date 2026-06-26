@@ -4,7 +4,6 @@ namespace AhidTechnologies\ZKTecoBiometric\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Log;
 use AhidTechnologies\ZKTecoBiometric\Traits\HasLogging;
 use AhidTechnologies\ZKTecoBiometric\Models\BiometricDevice;
 use AhidTechnologies\ZKTecoBiometric\Models\BiometricCommand;
@@ -69,12 +68,13 @@ class ZKTecoController
             'rows' => $rows,
         ]);
 
-        // Check if the content contains biometric data (fingerprint, user, card, or photo)
+        // Check if the content contains biometric data (fingerprint, user, card, or photo, bioData)
         $hasBiometricData = (
             strpos($rawContent, 'FP PIN=') !== false ||
             strpos($rawContent, 'USER PIN=') !== false ||
             strpos($rawContent, 'Card=') !== false ||
-            strpos($rawContent, 'BIOPHOTO PIN=') !== false
+            strpos($rawContent, 'BIOPHOTO PIN=') !== false ||
+            (strpos($rawContent, 'BIODATA PIN=') !== false && strpos($rawContent, 'Type=9') !== false)
         );
 
         if ($hasBiometricData) {

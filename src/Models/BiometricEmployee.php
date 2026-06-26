@@ -3,6 +3,7 @@
 namespace AhidTechnologies\ZKTecoBiometric\Models;
 
 use AhidTechnologies\ZKTecoBiometric\Events\BiometricAttendanceRecorded;
+use AhidTechnologies\ZKTecoBiometric\Events\BiometricDataReceived;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +27,9 @@ class BiometricEmployee extends Model
         'has_photo',
         'photo',
         'clock_in_method',
+        'has_face',
+        'face_template',
+        'face_template_major_ver',
     ];
 
     /**
@@ -37,6 +41,7 @@ class BiometricEmployee extends Model
         'has_fingerprint' => 'boolean',
         'has_photo' => 'boolean',
         'force_biometric_clockin' => 'boolean',
+        'has_face' => 'boolean',
     ];
 
     /**
@@ -92,6 +97,10 @@ class BiometricEmployee extends Model
             self::handleUserData($parts, $device);
         } elseif (strpos($parts[0], 'BIOPHOTO PIN=') === 0) {
             self::handlePhotoData($parts, $device);
+        } elseif (strpos($parts[0], 'BIODATA PIN=') === 0) {
+            self::handleFaceData($parts, $device);
+        } elseif (strpos($parts[0], 'BIODATA Pin=') === 0) {
+            self::handleFaceData($parts, $device);
         }
     }
 
@@ -121,6 +130,9 @@ class BiometricEmployee extends Model
                     'fingerprint_template' => $template,
                 ]
             );
+
+            // BẮN EVENT RA NGOÀI HỆ THỐNG LARAVEL
+            BiometricDataReceived::dispatch($employeeId, 1, $template);
         }
     }
 
@@ -143,6 +155,9 @@ class BiometricEmployee extends Model
                 $employeeId,
                 ['card_number' => $cardNumber]
             );
+
+            // BẮN EVENT RA NGOÀI HỆ THỐNG LARAVEL
+            BiometricDataReceived::dispatch($employeeId, 2, $cardNumber);
         }
     }
 
@@ -168,6 +183,45 @@ class BiometricEmployee extends Model
                     'photo' => $photo,
                 ]
             );
+
+            // BẮN EVENT RA NGOÀI HỆ THỐNG LARAVEL
+            BiometricDataReceived::dispatch($employeeId, 3, $photo);
+        }
+    }
+
+    /**
+     * Handle face data from device.
+     */
+    private static function handleFaceData(array $parts, BiometricDevice $device): void
+    {
+        $employeeId = str_replace('BIODATA PIN=', '', $parts[0]);
+        $faceTemplate = null;
+        $majorVer = null;
+
+        foreach ($parts as $part) {
+            if (strpos($part, 'TMP=') === 0) {
+                $faceTemplate = str_replace('TMP=', '', $part);
+            }
+            if (strpos($part, 'Tmp=') === 0) {
+                $faceTemplate = str_replace('Tmp=', '', $part);
+            }
+            if (strpos($part, 'MajorVer=') === 0) {
+                $majorVer = str_replace('MajorVer=', '', $part);
+            }
+        }
+
+        if ($employeeId && $faceTemplate) {
+            self::updateOrCreateBiometricEmployee(
+                $employeeId,
+                [
+                    'has_face' => true,
+                    'face_template' => $faceTemplate,
+                    'face_template_major_ver' => $majorVer ?? null,
+                ]
+            );
+
+            // BẮN EVENT RA NGOÀI HỆ THỐNG LARAVEL
+            BiometricDataReceived::dispatch($employeeId, 9, $faceTemplate, $majorVer);
         }
     }
 

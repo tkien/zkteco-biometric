@@ -22,6 +22,9 @@ return new class extends Migration
             $table->longText('fingerprint_template')->nullable();
             $table->boolean('has_photo')->default(false);
             $table->longText('photo')->nullable();
+            $table->boolean('has_face')->default(false);
+            $table->longText('face_template')->nullable();
+            $table->string('face_template_major_ver')->nullable();
             $table->string('clock_in_method')->nullable();
             $table->timestamps();
 

@@ -57,9 +57,10 @@ class ZKTecoBiometric
     /**
      * Send command to device.
      */
-    public function sendCommand(string $deviceSerial, string $commandId, string $command, ?string $employeeId = null, ?int $userId = null): BiometricCommand
+    public function sendCommand(string $commandType, string $deviceSerial, string $commandId, string $command, ?string $employeeId = null, ?int $userId = null): BiometricCommand
     {
         $commandData = [
+            'type' => $commandType ?? 'COMMAND',
             'device_serial_number' => $deviceSerial,
             'command_id' => $commandId,
             'command' => $command,
@@ -72,6 +73,8 @@ class ZKTecoBiometric
             'device_serial' => $deviceSerial,
             'command_id' => $commandId,
             'employee_id' => $employeeId,
+            'user_id' => $userId,
+            'command' => $command,
         ]);
 
         $this->logDatabaseOperation('CREATE', 'BiometricCommand', $commandData);
@@ -92,15 +95,16 @@ class ZKTecoBiometric
             'command_id' => $commandId,
             'pin' => $pin,
             'name' => $name,
+            'user_id' => $userId,
         ]);
 
-        return $this->sendCommand($deviceSerial, $commandId, $command, $pin, $userId);
+        return $this->sendCommand('CREATEUSER', $deviceSerial, $commandId, $command, $pin, $userId);
     }
 
     /**
      * Delete user command for device.
      */
-    public function deleteUserCommand(string $deviceSerial, string $pin): BiometricCommand
+    public function deleteUserCommand(string $deviceSerial, string $pin, ?int $userId = null): BiometricCommand
     {
         $commandId = 'DELETEUSER-' . uniqid();
         $command = BiometricCommand::deleteUserCommand($commandId, $pin);
@@ -109,9 +113,29 @@ class ZKTecoBiometric
             'device_serial' => $deviceSerial,
             'command_id' => $commandId,
             'pin' => $pin,
+            'user_id' => $userId,
         ]);
 
-        return $this->sendCommand($deviceSerial, $commandId, $command, $pin);
+        return $this->sendCommand('DELETEUSER', $deviceSerial, $commandId, $command, $pin, $userId);
+    }
+
+    /**
+     * Query BIODATA command for user.
+     */
+    public function queryBioDataCommand(string $deviceSerial, string $pin, int $bioType, ?int $userId = null): BiometricCommand
+    {
+        $commandId = 'BIODATA-' . uniqid();
+        $command = BiometricCommand::queryBioDataCommand($commandId, $pin, $bioType);
+
+        $this->logInfo('Creating query BIODATA command for device', [
+            'device_serial' => $deviceSerial,
+            'command_id' => $commandId,
+            'pin' => $pin,
+            'bio_type' => $bioType,
+            'user_id' => $userId,
+        ]);
+
+        return $this->sendCommand('BIODATA', $deviceSerial, $commandId, $command, $pin, $userId);
     }
 
     /**
