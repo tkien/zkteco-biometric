@@ -192,29 +192,24 @@ class BiometricEmployee extends Model
      */
     private static function handleFaceData(array $parts, BiometricDevice $device): void
     {
-        // 1. Tách chuỗi bằng dấu Tab (\t)
-        $bioItems = explode("\t", trim(str_replace('BIODATA', '', $parts[0])));
+        $employeeId = str_replace('BIODATA Pin=', '', $parts[0]);
+        $bioType = null;
+        $majorVer = null;
+        $minorVer = null;
+        $template = null;
 
-        // Khởi tạo mảng tạm để gom dữ liệu key => value
-        $parsedData = [];
-        foreach ($bioItems as $item) {
-            $keyValue = explode('=', $item, 2);
-            if (count($keyValue) === 2) {
-                $parsedData[strtoupper($keyValue[0])] = $keyValue[1];
+        foreach ($parts as $part) {
+            if (strpos($part, 'TYPE') === 0 || strpos($part, 'Type=') === 0) {
+                $bioType = str_replace(['TYPE', 'Type='], '', $part);
+            } elseif (strpos($part, 'TMP=') === 0 || strpos($part, 'Tmp=') === 0) {
+                $template = str_replace(['TMP=', 'Tmp='], '', $part);
+            }
+            elseif (strpos($part, 'MajorVer=') === 0) {
+                $majorVer = str_replace('MajorVer=', '', $part);
+            } elseif (strpos($part, 'MinorVer=') === 0) {
+                $minorVer = str_replace('MinorVer=', '', $part);
             }
         }
-
-        // 2. Gán ra các biến riêng biệt để bạn tự lấy sử dụng
-        $employeeId   = $parsedData['PIN'] ?? null;       // Mã nhân viên (Ví dụ: "0001")
-        $no           = $parsedData['NO'] ?? null;        // Số thứ tự data (Ví dụ: "0")
-        $index        = $parsedData['INDEX'] ?? null;     // Chỉ mục khuôn mặt
-        $valid        = $parsedData['VALID'] ?? null;     // Trạng thái hợp lệ (1: Có hiệu lực)
-        $duress       = $parsedData['DURESS'] ?? null;    // Cảnh báo cưỡng ép
-        $bioType      = $parsedData['TYPE'] ?? null;      // Loại sinh trắc học (9: Face, 1: Fingerprint)
-        $majorVer     = $parsedData['MAJORVER'] ?? null;  // Phiên bản thuật toán lớn (Ví dụ: "35")
-        $minorVer     = $parsedData['MINORVER'] ?? null;  // Phiên bản thuật toán nhỏ (Ví dụ: "4")
-        $format       = $parsedData['FORMAT'] ?? null;    // Định dạng template
-        $faceTemplate = $parsedData['TMP'] ?? null;       // CHUỖI FACE ENCODE (BASE64) BẠN CẦN
 
         // Log thông tin nhận được từ thiết bị
         if(config('zkteco-biometric.logging.enabled', true)) {
@@ -222,31 +217,27 @@ class BiometricEmployee extends Model
             ->info('[ZKTeco] Face data received', [
                 'device_sn' => $device->serial_number,
                 'employee_id' => $employeeId,
-                'no' => $no,
-                'index' => $index,
-                'valid' => $valid,
-                'duress' => $duress,
                 'bio_type' => $bioType,
                 'major_ver' => $majorVer,
                 'minor_ver' => $minorVer,
-                'format' => $format,
-                'face_template_length' => strlen($faceTemplate),
+                'template_length' => strlen($template),
             ]);
         }
 
         // --- BẮT ĐẦU LOGIC TẠI ĐÂY ---
-        if ($bioType == '9' && !empty($faceTemplate)) {
+        if ($bioType == '9' && !empty($template)) {
             self::updateOrCreateBiometricEmployee(
                 $employeeId,
                 [
                     'has_face' => true,
-                    'face_template' => $faceTemplate,
+                    'face_template' => $template,
                     'face_template_major_ver' => $majorVer ?? null,
+                    // 'face_template_minor_ver' => $minorVer ?? null,
                 ]
             );
 
             // BẮN EVENT RA NGOÀI HỆ THỐNG LARAVEL
-            BiometricDataReceived::dispatch($device, $employeeId, 9, $faceTemplate, $majorVer);
+            BiometricDataReceived::dispatch($device, $employeeId, 9, $template, $majorVer);
         }
     }
 

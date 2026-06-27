@@ -236,6 +236,6 @@ class ZKTecoBiometric
      */
     public function getVersion(): string
     {
-        return '1.1.13'; // Update this version as needed
+        return '1.1.14'; // Update this version as needed
     }
 }
