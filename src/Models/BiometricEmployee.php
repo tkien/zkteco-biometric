@@ -7,11 +7,10 @@ use AhidTechnologies\ZKTecoBiometric\Events\BiometricDataReceived;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
-use AhidTechnologies\ZKTecoBiometric\Traits\HasLogging;
+use Illuminate\Support\Facades\Log;
 
 class BiometricEmployee extends Model
 {
-    use HasLogging;
     /**
      * The attributes that are mass assignable.
      *
@@ -218,19 +217,22 @@ class BiometricEmployee extends Model
         $faceTemplate = $parsedData['TMP'] ?? null;       // CHUỖI FACE ENCODE (BASE64) BẠN CẦN
 
         // Log thông tin nhận được từ thiết bị
-        self::logInfo('Face data received', [
-            'device_serial' => $device->serial_number ?? 'unknown',
-            'employee_id' => $employeeId,
-            'no' => $no,
-            'index' => $index,
-            'valid' => $valid,
-            'duress' => $duress,
-            'bio_type' => $bioType,
-            'major_ver' => $majorVer,
-            'minor_ver' => $minorVer,
-            'format' => $format,
-            'face_template_length' => strlen($faceTemplate),
-        ]);
+        if(config('zkteco-biometric.logging.enabled', true)) {
+            Log::channel(config('zkteco-biometric.logging.channel', 'daily'))
+            ->info('[ZKTeco] Face data received', [
+                'device_sn' => $device->serial_number,
+                'employee_id' => $employeeId,
+                'no' => $no,
+                'index' => $index,
+                'valid' => $valid,
+                'duress' => $duress,
+                'bio_type' => $bioType,
+                'major_ver' => $majorVer,
+                'minor_ver' => $minorVer,
+                'format' => $format,
+                'face_template_length' => strlen($faceTemplate),
+            ]);
+        }
 
         // --- BẮT ĐẦU LOGIC TẠI ĐÂY ---
         if ($bioType == '9' && !empty($faceTemplate)) {
