@@ -97,9 +97,7 @@ class BiometricEmployee extends Model
             self::handleUserData($parts, $device);
         } elseif (strpos($parts[0], 'BIOPHOTO PIN=') === 0) {
             self::handlePhotoData($parts, $device);
-        } elseif (strpos($parts[0], 'BIODATA PIN=') === 0) {
-            self::handleFaceData($parts, $device);
-        } elseif (strpos($parts[0], 'BIODATA Pin=') === 0) {
+        } elseif (strpos($parts[0], 'BIODATA') === 0) {
             self::handleFaceData($parts, $device);
         }
     }
@@ -194,23 +192,32 @@ class BiometricEmployee extends Model
      */
     private static function handleFaceData(array $parts, BiometricDevice $device): void
     {
-        $employeeId = str_replace('BIODATA PIN=', '', $parts[0]);
-        $faceTemplate = null;
-        $majorVer = null;
+        // 1. Tách chuỗi bằng dấu Tab (\t)
+        $bioItems = explode("\t", trim($parts[0]));
 
-        foreach ($parts as $part) {
-            if (strpos($part, 'TMP=') === 0) {
-                $faceTemplate = str_replace('TMP=', '', $part);
-            }
-            if (strpos($part, 'Tmp=') === 0) {
-                $faceTemplate = str_replace('Tmp=', '', $part);
-            }
-            if (strpos($part, 'MajorVer=') === 0) {
-                $majorVer = str_replace('MajorVer=', '', $part);
+        // Khởi tạo mảng tạm để gom dữ liệu key => value
+        $parsedData = [];
+        foreach ($bioItems as $item) {
+            $keyValue = explode('=', $item, 2);
+            if (count($keyValue) === 2) {
+                $parsedData[$keyValue[0]] = $keyValue[1];
             }
         }
 
-        if ($employeeId && $faceTemplate) {
+        // 2. Gán ra các biến riêng biệt để bạn tự lấy sử dụng
+        $employeeId   = $parsedData['Pin'] ?? null;       // Mã nhân viên (Ví dụ: "0001")
+        $no           = $parsedData['No'] ?? null;        // Số thứ tự data (Ví dụ: "0")
+        $index        = $parsedData['Index'] ?? null;     // Chỉ mục khuôn mặt
+        $valid        = $parsedData['Valid'] ?? null;     // Trạng thái hợp lệ (1: Có hiệu lực)
+        $duress       = $parsedData['Duress'] ?? null;    // Cảnh báo cưỡng ép
+        $bioType      = $parsedData['Type'] ?? null;      // Loại sinh trắc học (9: Face, 1: Fingerprint)
+        $majorVer     = $parsedData['MajorVer'] ?? null;  // Phiên bản thuật toán lớn (Ví dụ: "35")
+        $minorVer     = $parsedData['MinorVer'] ?? null;  // Phiên bản thuật toán nhỏ (Ví dụ: "4")
+        $format       = $parsedData['Format'] ?? null;    // Định dạng template
+        $faceTemplate = $parsedData['Tmp'] ?? null;       // CHUỖI FACE ENCODE (BASE64) BẠN CẦN
+
+        // --- BẮT ĐẦU LOGIC TẠI ĐÂY ---
+        if ($bioType == '9' && !empty($faceTemplate)) {
             self::updateOrCreateBiometricEmployee(
                 $employeeId,
                 [

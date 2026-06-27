@@ -82,7 +82,7 @@ class ZKTecoController
             strpos($rawContent, 'USER PIN=') !== false ||
             strpos($rawContent, 'Card=') !== false ||
             strpos($rawContent, 'BIOPHOTO PIN=') !== false ||
-            (strpos($rawContent, 'BIODATA PIN=') !== false && strpos($rawContent, 'Type=9') !== false)
+            (strpos($rawContent, 'BIODATA') !== false && strpos($rawContent, 'Type=9') !== false)
         );
 
         if ($hasBiometricData) {
