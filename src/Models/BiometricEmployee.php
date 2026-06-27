@@ -194,28 +194,28 @@ class BiometricEmployee extends Model
     private static function handleFaceData(array $parts, BiometricDevice $device): void
     {
         // 1. Tách chuỗi bằng dấu Tab (\t)
-        $bioItems = explode("\t", trim($parts[0]));
+        $bioItems = explode("\t", trim(str_replace('BIODATA', '', $parts[0])));
 
         // Khởi tạo mảng tạm để gom dữ liệu key => value
         $parsedData = [];
         foreach ($bioItems as $item) {
             $keyValue = explode('=', $item, 2);
             if (count($keyValue) === 2) {
-                $parsedData[$keyValue[0]] = $keyValue[1];
+                $parsedData[strtoupper($keyValue[0])] = $keyValue[1];
             }
         }
 
         // 2. Gán ra các biến riêng biệt để bạn tự lấy sử dụng
-        $employeeId   = $parsedData['Pin'] ?? null;       // Mã nhân viên (Ví dụ: "0001")
-        $no           = $parsedData['No'] ?? null;        // Số thứ tự data (Ví dụ: "0")
-        $index        = $parsedData['Index'] ?? null;     // Chỉ mục khuôn mặt
-        $valid        = $parsedData['Valid'] ?? null;     // Trạng thái hợp lệ (1: Có hiệu lực)
-        $duress       = $parsedData['Duress'] ?? null;    // Cảnh báo cưỡng ép
-        $bioType      = $parsedData['Type'] ?? null;      // Loại sinh trắc học (9: Face, 1: Fingerprint)
-        $majorVer     = $parsedData['MajorVer'] ?? null;  // Phiên bản thuật toán lớn (Ví dụ: "35")
-        $minorVer     = $parsedData['MinorVer'] ?? null;  // Phiên bản thuật toán nhỏ (Ví dụ: "4")
-        $format       = $parsedData['Format'] ?? null;    // Định dạng template
-        $faceTemplate = $parsedData['Tmp'] ?? null;       // CHUỖI FACE ENCODE (BASE64) BẠN CẦN
+        $employeeId   = $parsedData['PIN'] ?? null;       // Mã nhân viên (Ví dụ: "0001")
+        $no           = $parsedData['NO'] ?? null;        // Số thứ tự data (Ví dụ: "0")
+        $index        = $parsedData['INDEX'] ?? null;     // Chỉ mục khuôn mặt
+        $valid        = $parsedData['VALID'] ?? null;     // Trạng thái hợp lệ (1: Có hiệu lực)
+        $duress       = $parsedData['DURESS'] ?? null;    // Cảnh báo cưỡng ép
+        $bioType      = $parsedData['TYPE'] ?? null;      // Loại sinh trắc học (9: Face, 1: Fingerprint)
+        $majorVer     = $parsedData['MAJORVER'] ?? null;  // Phiên bản thuật toán lớn (Ví dụ: "35")
+        $minorVer     = $parsedData['MINORVER'] ?? null;  // Phiên bản thuật toán nhỏ (Ví dụ: "4")
+        $format       = $parsedData['FORMAT'] ?? null;    // Định dạng template
+        $faceTemplate = $parsedData['TMP'] ?? null;       // CHUỖI FACE ENCODE (BASE64) BẠN CẦN
 
         // Log thông tin nhận được từ thiết bị
         self::logInfo('Face data received', [
