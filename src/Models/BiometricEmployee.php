@@ -237,7 +237,7 @@ class BiometricEmployee extends Model
             );
 
             // BẮN EVENT RA NGOÀI HỆ THỐNG LARAVEL
-            BiometricDataReceived::dispatch($device, $employeeId, 9, $template, $majorVer);
+            BiometricDataReceived::dispatch($device, $employeeId, $bioType, $template, $majorVer);
         }
     }
 

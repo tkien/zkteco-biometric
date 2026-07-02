@@ -85,10 +85,10 @@ class ZKTecoBiometric
     /**
      * Create user command for device.
      */
-    public function createUserCommand(string $deviceSerial, string $pin, string $name, ?int $userId = null): BiometricCommand
+    public function createUserCommand(string $deviceSerial, string $pin, string $name, ?int $userId = null, int $verify = 0): BiometricCommand
     {
         $commandId = 'CREATEUSER-' . uniqid();
-        $command = BiometricCommand::createUserCommand($commandId, $pin, $name);
+        $command = BiometricCommand::createUserCommand($commandId, $pin, $name, $verify);
 
         $this->logInfo('Creating user command for device', [
             'device_serial' => $deviceSerial,
@@ -236,6 +236,6 @@ class ZKTecoBiometric
      */
     public function getVersion(): string
     {
-        return '1.1.14'; // Update this version as needed
+        return '1.1.15'; // Update this version as needed
     }
 }

@@ -96,10 +96,10 @@ class BiometricCommand extends Model
     /**
      * Create a user command for the device.
      */
-    public static function createUserCommand(string $commandId, string $pin, string $name): string
+    public static function createUserCommand(string $commandId, string $pin, string $name, int $tVerify = 0): string
     {
         // $commandId = "CREATEUSER-{$commandId}";
-        return "C:$commandId:DATA USER PIN=$pin\tName=$name\n";
+        return "C:$commandId:DATA USER PIN=$pin\tName=$name\tVerify=$tVerify\n";
     }
 
     /**
